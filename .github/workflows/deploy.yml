@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:  # optional manual trigger
 
 jobs:
   deploy:
@@ -34,14 +35,12 @@ jobs:
 
       - name: Deploy to S3
         run: |
-          # Sync all assets except index.html, set public-read and long cache
+          # Sync all assets except index.html, long-term cache
           aws s3 sync ./dist s3://puzzlebite-frontend-on-s3 \
             --delete \
             --exclude "index.html" \
-            --cache-control "max-age=31536000,immutable" \
-            --acl public-read
+            --cache-control "max-age=31536000,immutable"
 
-          # Upload index.html separately, no cache, public-read
+          # Upload index.html separately with no cache
           aws s3 cp ./dist/index.html s3://puzzlebite-frontend-on-s3/index.html \
-            --cache-control "no-cache,no-store,must-revalidate" \
-            --acl public-read
+            --cache-control "no-cache,no-store,must-revalidate"
