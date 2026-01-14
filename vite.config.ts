@@ -1,8 +1,16 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+// import { defineConfig } from 'vite'
+// import react from '@vitejs/plugin-react'
 
-// Change "puzzlebite" to your repo name if different
+// // Change "puzzlebite" to your repo name if different
+// export default defineConfig({
+//   plugins: [react()],
+//   base: '/puzzlebite/'
+// })
+
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
 export default defineConfig({
   plugins: [react()],
-  base: '/puzzlebite/'
-})
+  base: "/",   // MUST be this for S3 root hosting
+});
