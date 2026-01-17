@@ -1,11 +1,55 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Menu as MenuIcon, X as CloseIcon, QrCode, Play, Tag, Shield, Zap, Star, Database, BarChart2, MapPin, TrendingUp  } from "lucide-react";
+import { Menu as MenuIcon, X as CloseIcon, QrCode, Play, Tag, Shield, Zap, Star, Database, BarChart2, MapPin, TrendingUp } from "lucide-react";
+
+const BASE_MONTHLY = {
+  BASIC: 4999,
+  PREMIUM: 7999,
+  GOLD: 10999
+};
+
+const PRICING = {
+  MONTHLY: {
+    BASIC: 4999,
+    PREMIUM: 7999,
+    GOLD: 10999
+  },
+  QUARTERLY: {
+    BASIC: 4249,   // 15% off
+    PREMIUM: 6799,
+    GOLD: 9349
+  },
+  HALF_YEARLY: {
+    BASIC: 3749,   // 25% off
+    PREMIUM: 5999,
+    GOLD: 8249
+  }
+};
+
+const getSavings = (plan: 'BASIC' | 'PREMIUM' | 'GOLD') => {
+  const base = BASE_MONTHLY[plan];
+  const discounted = PRICING[billingCycle][plan];
+  const months = billingCycle === 'QUARTERLY' ? 3 : billingCycle === 'HALF_YEARLY' ? 6 : 1;
+
+  return Math.round((base * months) - (discounted * months));
+};
+
+function decodeBase64(value: string | null) {
+  try {
+    return value ? atob(value) : null;
+  } catch {
+    return null;
+  }
+}
+
+
+
+
 
 function Section({ id, className = "", children }) {
   return (
     <section id={id} className={`scroll-mt-28 min-h-screen py-36 ${className}`}>{children}</section>
   );
-} 
+}
 
 
 
@@ -45,17 +89,83 @@ export default function PuzzleBITE() {
   const [menuOpen, setMenuOpen] = useState(false);
   const navRef = useRef(null);
 
+  const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY'>('MONTHLY');
+  const [selectedPlan, setSelectedPlan] = useState<'BASIC' | 'PREMIUM' | 'GOLD'>('BASIC');
+
+  const [restaurantContext, setRestaurantContext] = useState<{
+    id?: string;
+    name?: string;
+    currentPlan?: 'BASIC' | 'PREMIUM' | 'GOLD';
+  }>({});
+
+  const [shake, setShake] = useState(false);
+
+  useEffect(() => {
+    setShake(true);
+    const t = setTimeout(() => setShake(false), 300);
+    return () => clearTimeout(t);
+  }, [billingCycle]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    const restaurantId = decodeBase64(params.get('restaurantId'));
+    const restaurantName = decodeBase64(params.get('restaurantName'));
+    const currentPlan = decodeBase64(params.get('currentPlan')) as 'BASIC' | 'PREMIUM' | 'GOLD' | null;
+
+    if (restaurantId || restaurantName || currentPlan) {
+      setRestaurantContext({
+        id: restaurantId,
+        name: restaurantName,
+        currentPlan
+      });
+
+      setTimeout(() => {
+        const pricingSection = document.getElementById('pricing');
+        pricingSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 400);
+    }
+  }, []);
+
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    const encodedId = params.get('restaurantId');
+    const encodedName = params.get('restaurantName');
+    const currentPlan = params.get('currentPlan') as 'BASIC' | 'PREMIUM' | 'GOLD' | null;
+
+    if (encodedId && encodedName && currentPlan) {
+      try {
+        const decodedId = atob(encodedId);
+        const decodedName = atob(encodedName);
+
+        setRestaurantContext({
+          id: decodedId,
+          name: decodedName,
+          currentPlan
+        });
+
+        setSelectedPlan(currentPlan); // auto-select their current plan
+      } catch (e) {
+        console.error("Invalid base64 in URL params", e);
+      }
+    }
+  }, []);
+
+
+
   // Contact form
   const [form, setForm] = useState({ email: "", phone: "", message: "" });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const FORMSPREE_ENDPOINT = "https://formspree.io/f/mzzjkgya"; // add your Formspree endpoint if desired
   const [selectedFeature, setSelectedFeature] = useState<null | {
-  title: string;
-  description: string;
-  longDescription: string;
-  Icon: any;
-}>(null);
+    title: string;
+    description: string;
+    longDescription: string;
+    Icon: any;
+  }>(null);
 
 
   const handleSubmit = async (e) => {
@@ -96,107 +206,107 @@ export default function PuzzleBITE() {
   };
 
   function LaunchCountdown() {
-        const launchDate = new Date("2026-02-11T00:00:00").getTime();
-        const [timeLeft, setTimeLeft] = useState({
-          days: 0, hours: 0, minutes: 0, seconds: 0
+    const launchDate = new Date("2026-03-01T00:00:00").getTime();
+    const [timeLeft, setTimeLeft] = useState({
+      days: 0, hours: 0, minutes: 0, seconds: 0
+    });
+
+    useEffect(() => {
+      const timer = setInterval(() => {
+        const now = new Date().getTime();
+        const distance = launchDate - now;
+
+        if (distance < 0) return;
+
+        setTimeLeft({
+          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((distance / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((distance / (1000 * 60)) % 60),
+          seconds: Math.floor((distance / 1000) % 60),
         });
+      }, 1000);
 
-        useEffect(() => {
-          const timer = setInterval(() => {
-            const now = new Date().getTime();
-            const distance = launchDate - now;
+      return () => clearInterval(timer);
+    }, []);
 
-            if (distance < 0) return;
+    return (
 
-            setTimeLeft({
-              days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-              hours: Math.floor((distance / (1000 * 60 * 60)) % 24),
-              minutes: Math.floor((distance / (1000 * 60)) % 60),
-              seconds: Math.floor((distance / 1000) % 60),
-            });
-          }, 1000);
-
-          return () => clearInterval(timer);
-        }, []);
-
-        return (
-          
-            <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-              <div>
-                <p className="text-3xl font-extrabold gradient-text">Launching In</p>
-                <div className="flex gap-4 mt-3 text-center">
-                  {["Days","Hours","Minutes","Seconds"].map((label, i) => {
-                    const values = [timeLeft.days, timeLeft.hours, timeLeft.minutes, timeLeft.seconds];
-                    return (
-                      <div key={label} className="bg-white/20 backdrop-blur rounded-xl px-4 py-2">
-                        <div className="text-3xl font-extrabold">{String(values[i]).padStart(2, "0")}</div>
-                        <div className="text-xs uppercase tracking-wide">{label}</div>
-                      </div>
-                    );
-                  })}
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+        <div>
+          <p className="text-3xl font-extrabold gradient-text">Launching In</p>
+          <div className="flex gap-4 mt-3 text-center">
+            {["Days", "Hours", "Minutes", "Seconds"].map((label, i) => {
+              const values = [timeLeft.days, timeLeft.hours, timeLeft.minutes, timeLeft.seconds];
+              return (
+                <div key={label} className="bg-white/20 backdrop-blur rounded-xl px-4 py-2">
+                  <div className="text-3xl font-extrabold">{String(values[i]).padStart(2, "0")}</div>
+                  <div className="text-xs uppercase tracking-wide">{label}</div>
                 </div>
-              </div>
-              
+              );
+            })}
+          </div>
+        </div>
 
-            </div>
-          
-        );
-      }
-      
-  function StatCard({ number, suffix, label }: { number: number; suffix: string; label: string }) {
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [visible, setVisible] = useState(false);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => entry.isIntersecting && setVisible(true),
-      { threshold: 0.6 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!visible) return;
-    let start = 0;
-    const duration = 1500;
-    const increment = number / (duration / 16);
-
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= number) {
-        setCount(number);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(start));
-      }
-    }, 16);
-
-    return () => clearInterval(timer);
-  }, [visible, number]);
-
-  return (
-    <div
-      ref={ref}
-      className="relative rounded-2xl p-8 text-white shadow-xl overflow-hidden"
-      style={{
-        backgroundImage: "url('https://raw.githubusercontent.com/Loki-Singh/puzzleBiteWeb/main/stats_background_image.jpg')",   // put the image in public/stats-bg.jpg
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      <div className="text-5xl font-extrabold gradient-text">
-        {count.toLocaleString()}
-        {suffix}
       </div>
-      <p className="mt-3 text-white/90 text-lg">{label}</p>
-    </div>
-  );
-}
-    
 
-      
+    );
+  }
+
+  function StatCard({ number, suffix, label }: { number: number; suffix: string; label: string }) {
+    const [count, setCount] = useState(0);
+    const ref = useRef<HTMLDivElement | null>(null);
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+      const observer = new IntersectionObserver(
+        ([entry]) => entry.isIntersecting && setVisible(true),
+        { threshold: 0.6 }
+      );
+      if (ref.current) observer.observe(ref.current);
+      return () => observer.disconnect();
+    }, []);
+
+    useEffect(() => {
+      if (!visible) return;
+      let start = 0;
+      const duration = 1500;
+      const increment = number / (duration / 16);
+
+      const timer = setInterval(() => {
+        start += increment;
+        if (start >= number) {
+          setCount(number);
+          clearInterval(timer);
+        } else {
+          setCount(Math.floor(start));
+        }
+      }, 16);
+
+      return () => clearInterval(timer);
+    }, [visible, number]);
+
+    return (
+      <div
+        ref={ref}
+        className="relative rounded-2xl p-8 text-white shadow-xl overflow-hidden"
+        style={{
+          backgroundImage: "url('https://raw.githubusercontent.com/Loki-Singh/puzzleBiteWeb/main/stats_background_image.jpg')",   // put the image in public/stats-bg.jpg
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="text-5xl font-extrabold gradient-text">
+          {count.toLocaleString()}
+          {suffix}
+        </div>
+        <p className="mt-3 text-white/90 text-lg">{label}</p>
+      </div>
+    );
+  }
+
+
+
 
   // ===== EFFECTS =====
   useEffect(() => {
@@ -295,6 +405,13 @@ export default function PuzzleBITE() {
 
         .animate-modalIn { animation: modalIn 0.35s cubic-bezier(0.25, 0.8, 0.25, 1); }
 
+        @keyframes wiggle {
+          0% { transform: rotate(0deg); }
+          25% { transform: rotate(0.5deg); }
+          50% { transform: rotate(-0.5deg); }
+          75% { transform: rotate(0.5deg); }
+          100% { transform: rotate(0deg); }
+        }
 
 
         .popular-glow { box-shadow: 0 0 15px rgba(255, 222, 106, 0.8);}
@@ -326,7 +443,7 @@ export default function PuzzleBITE() {
           </li>
         </ul>
       </nav>
-      
+
       <Section id="home" className="flex flex-col md:flex-row items-center justify-center text-white text-left px-10">
         <div className="md:w-1/2 hero-text-enter">
           <h1 className="text-6xl font-extrabold mb-6 gradient-text ">Turn waiting time into engagement opportunities</h1>
@@ -341,7 +458,7 @@ export default function PuzzleBITE() {
           </div>
         </div>
       </Section>
-      
+
       <section id="traction" className="text-white">
         <div className="max-w-6xl mx-auto text-center mb-12">
           <h2 className="text-5xl font-extrabold gradient-text">Early Momentum</h2>
@@ -351,7 +468,7 @@ export default function PuzzleBITE() {
         </div>
 
         <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-10">
-          <StatCard 
+          <StatCard
             number={100000}
             suffix="+"
             label="Customers Engaged (Projected)"
@@ -364,7 +481,7 @@ export default function PuzzleBITE() {
         </div>
       </section>
 
-      
+
 
       <Section id="how" className="text-white">
         <div className="text-center mb-12">
@@ -373,9 +490,9 @@ export default function PuzzleBITE() {
         </div>
         <div className="max-w-6xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
           {[
-            { title: "Scan QR", description: "Guests scan a QR code to see exciting wait time discounts/offers.", Icon: QrCode, image: featureImages[0]},
-            { title: "Play Challenges", description: "Crack the puzzles & riddles challenge.", Icon: Play, image: featureImages[1]},
-            { title: "Earn Discounts", description: "Earn the discount/offer coupons to be redeemed now or later.", Icon: Tag, image: featureImages[2]}
+            { title: "Scan QR", description: "Guests scan a QR code to see exciting wait time discounts/offers.", Icon: QrCode, image: featureImages[0] },
+            { title: "Play Challenges", description: "Crack the puzzles & riddles challenge.", Icon: Play, image: featureImages[1] },
+            { title: "Earn Discounts", description: "Earn the discount/offer coupons to be redeemed now or later.", Icon: Tag, image: featureImages[2] }
           ].map((f, idx) => (
             <Card key={idx} image={f.image} title={f.title} description={f.description} Icon={f.Icon} parallax />
           ))}
@@ -387,59 +504,59 @@ export default function PuzzleBITE() {
           <h2 className="text-5xl font-extrabold gradient-text">Features</h2>
           <p className="mt-3 text-lg text-white/90 gradient-text">Never before features to get rid of abysmal waiting time.</p>
         </div>
-       <div className="max-w-6xl mx-auto flex flex-col items-center">
-  {/* First row - 3 cards */}
-  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
-    {[
-  {
-    title: "Gamified discount engine",
-    description: "Fun, interactive way to earn deals—not just passive coupons",
-    longDescription: "Customers pay a small attempt fee to play quick challenges and earn discounts. This makes rewards feel earned, increases redemption joy, and helps cafes recover discount cost through micro-revenue.",
-    Icon: Shield
-  },
-  {
-    title: "Multi-category puzzles",
-    description: "Puzzles tailored to diners’ preferences (coding, trivia, logic)",
-    longDescription: "From logic riddles and trivia to coding mini-challenges and multiplayer games, PuzzleBITE adapts to different user interests and keeps engagement fresh every visit.",
-    Icon: Zap
-  },
-  {
-    title: "Dashboards",
-    description: "Enables restaurants to track usage, redemptions, and ROI",
-    longDescription: "Restaurant owners get real-time visibility into scans, plays, rewards issued, repeat visits, and revenue impact — turning engagement into measurable business intelligence.",
-    Icon: Star
-  }
-].map((f, idx) => (
-  <div key={idx} onClick={() => setSelectedFeature(f)} className="cursor-pointer">
-    <Card image={featureImages[idx]} title={f.title} description={f.description} Icon={f.Icon} parallax />
-  </div>
-))}
+        <div className="max-w-6xl mx-auto flex flex-col items-center">
+          {/* First row - 3 cards */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
+            {[
+              {
+                title: "Gamified discount engine",
+                description: "Fun, interactive way to earn deals—not just passive coupons",
+                longDescription: "Customers pay a small attempt fee to play quick challenges and earn discounts. This makes rewards feel earned, increases redemption joy, and helps cafes recover discount cost through micro-revenue.",
+                Icon: Shield
+              },
+              {
+                title: "Multi-category puzzles",
+                description: "Puzzles tailored to diners’ preferences (coding, trivia, logic)",
+                longDescription: "From logic riddles and trivia to coding mini-challenges and multiplayer games, PuzzleBITE adapts to different user interests and keeps engagement fresh every visit.",
+                Icon: Zap
+              },
+              {
+                title: "Dashboards",
+                description: "Enables restaurants to track usage, redemptions, and ROI",
+                longDescription: "Restaurant owners get real-time visibility into scans, plays, rewards issued, repeat visits, and revenue impact — turning engagement into measurable business intelligence.",
+                Icon: Star
+              }
+            ].map((f, idx) => (
+              <div key={idx} onClick={() => setSelectedFeature(f)} className="cursor-pointer">
+                <Card image={featureImages[idx]} title={f.title} description={f.description} Icon={f.Icon} parallax />
+              </div>
+            ))}
 
-  </div>
+          </div>
 
-  {/* Second row - 2 centered cards */}
-  <div className="grid sm:grid-cols-2 gap-10 mt-10 lg:w-2/3">
-    {[
-  {
-    title: "Live Feed",
-    description: "Real-time events and updates for Social & viral hooks.",
-    longDescription: "cafes can publish daily visuals, events, and promotions directly inside the app, turning every customer into a potential social ambassador and driving organic reach.",
-    Icon: Database
-  },
-  {
-    title: "Performance-aligned pricing",
-    description: "Mix of subscriptions and per-puzzle commissions ensures risk-sharing.",
-    longDescription: "Our hybrid model ensures cafes pay in proportion to the value they receive — aligning PuzzleBITE’s success directly with restaurant success.",
-    Icon: BarChart2
-  }
-].map((f, idx) => (
-  <div key={idx + 3} onClick={() => setSelectedFeature(f)} className="cursor-pointer">
-    <Card image={featureImages[idx + 3]} title={f.title} description={f.description} Icon={f.Icon} parallax />
-  </div>
-))}
+          {/* Second row - 2 centered cards */}
+          <div className="grid sm:grid-cols-2 gap-10 mt-10 lg:w-2/3">
+            {[
+              {
+                title: "Live Feed",
+                description: "Real-time events and updates for Social & viral hooks.",
+                longDescription: "cafes can publish daily visuals, events, and promotions directly inside the app, turning every customer into a potential social ambassador and driving organic reach.",
+                Icon: Database
+              },
+              {
+                title: "Performance-aligned pricing",
+                description: "Mix of subscriptions and per-puzzle commissions ensures risk-sharing.",
+                longDescription: "Our hybrid model ensures cafes pay in proportion to the value they receive — aligning PuzzleBITE’s success directly with restaurant success.",
+                Icon: BarChart2
+              }
+            ].map((f, idx) => (
+              <div key={idx + 3} onClick={() => setSelectedFeature(f)} className="cursor-pointer">
+                <Card image={featureImages[idx + 3]} title={f.title} description={f.description} Icon={f.Icon} parallax />
+              </div>
+            ))}
 
-  </div>
-</div>
+          </div>
+        </div>
 
       </Section>
 
@@ -459,17 +576,66 @@ export default function PuzzleBITE() {
         </div>
       </Section>
 
-      
+
+      {restaurantContext.name && (
+        <div className="max-w-6xl mx-auto mb-6 p-4 rounded-xl bg-gradient-to-r from-yellow-500/20 to-pink-500/20 border border-yellow-400/40 text-center">
+          <h3 className="text-xl font-bold text-white">
+            👋 Welcome, {restaurantContext.name}
+          </h3>
+          <p className="text-sm text-white/80 mt-1">
+            Renew your <span className="font-semibold text-yellow-300">{restaurantContext.currentPlan}</span> plan below
+          </p>
+        </div>
+      )}
 
       <Section id="pricing" className="text-white">
         <div className="text-center mb-12">
+          {restaurantContext.name && (
+            <div className="mb-6 text-center">
+              <div className="inline-block px-6 py-3 rounded-2xl bg-gradient-to-r from-[#F75564] to-[#FFDEA3] text-black font-bold shadow-xl animate-fade-in">
+                👋 Welcome {restaurantContext.name} — Renew your PuzzleBITE plan below
+              </div>
+            </div>
+          )}
+
           <h2 className="text-5xl font-extrabold gradient-text">Simple Pricing</h2>
           <p className="mt-4 text-lg text-slate-200 gradient-text">Flexible plans tailored for every venue’s needs.</p>
         </div>
-        <div className="max-w-6xl mx-auto grid sm:grid-cols-3 gap-10">
+
+        <div className="flex justify-center mb-10">
+          <div className="relative flex bg-white/10 backdrop-blur-md rounded-full p-1 border border-white/20">
+
+            {(['MONTHLY', 'QUARTERLY', 'HALF_YEARLY'] as const).map((cycle) => (
+              <button
+                key={cycle}
+                onClick={() => setBillingCycle(cycle)}
+                className={`relative z-10 px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300
+                  ${billingCycle === cycle ? 'text-black' : 'text-white/70 hover:text-white'}`}
+              >
+                {cycle === 'MONTHLY' && 'Monthly'}
+                {cycle === 'QUARTERLY' && 'Quarterly (Save 15%)'}
+                {cycle === 'HALF_YEARLY' && 'Half-Yearly (Save 25%)'}
+              </button>
+            ))}
+
+            {/* Sliding background */}
+            <span
+              className={`absolute top-1 bottom-1 w-1/3 rounded-full bg-gradient-to-r from-yellow-400 to-pink-500 transition-all duration-300
+              ${billingCycle === 'MONTHLY' && 'left-1'}
+              ${billingCycle === 'QUARTERLY' && 'left-1/4'}
+              ${billingCycle === 'HALF_YEARLY' && 'left-2/3'}`}
+            />
+          </div>
+        </div>
+
+
+
+        <div className={`max-w-6xl mx-auto grid sm:grid-cols-3 gap-10 transition-transform ${shake ? 'animate-[wiggle_0.3s_ease-in-out]' : ''}`}>
+
           {[
             {
               tier: "Standard",
+              planKey: "BASIC",
               features: [
                 "Activate upto 2 offers daily",
                 "Monthly Performance Report",
@@ -477,11 +643,11 @@ export default function PuzzleBITE() {
                 "Email support",
                 "Venue branding (basic)",
               ],
-              price: "₹4,999 / month",
               img: pricingImages[0]
             },
             {
               tier: "Premium",
+              planKey: "PREMIUM",
               features: [
                 "Activate upto 5 offers daily",
                 "Monthly Performance Report",
@@ -489,11 +655,11 @@ export default function PuzzleBITE() {
                 "Analytics module access",
                 "Monthly strategy consultation"
               ],
-              price: "₹7,999 / month",
               img: pricingImages[1]
             },
             {
               tier: "Gold",
+              planKey: "GOLD",
               features: [
                 "Everything in Premium",
                 "Dedicated account manager",
@@ -505,39 +671,84 @@ export default function PuzzleBITE() {
                 "Featured Placement",
                 "Instagram Redirect"
               ],
-              price: "₹10,999 / month",
               img: pricingImages[2]
             }
-          ].map((plan) => (
-            <Card
-              key={plan.tier}
-              image={plan.img}
-              title={plan.tier}
-              price={plan.price}
-              description={`Perfect for ${plan.tier.toLowerCase()} operations looking to gamify dining.`}
-              Icon={Star}
-              parallax
-              tall
-            >
-              {plan.tier === "Gold" && (
-                <div className="absolute top-4 right-4 bg-yellow-400 text-black text-sm font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1 popular-glow">
+          ].map((plan) => {
+            const base = BASE_MONTHLY[plan.planKey];
+            const discounted = PRICING[billingCycle][plan.planKey];
+            const months = billingCycle === 'MONTHLY' ? 1 : billingCycle === 'QUARTERLY' ? 3 : 6;
+            const savings = base * months - discounted * months;
+            const isCurrentPlan = restaurantContext.currentPlan === plan.planKey;
 
-                  Most Popular
+            return (
+              <Card
+                key={plan.tier}
+                image={plan.img}
+                title={plan.tier}
+                description={`Perfect for ${plan.tier.toLowerCase()} operations looking to gamify dining.`}
+                Icon={Star}
+                parallax
+                tall
+                className={isCurrentPlan ? 'ring-2 ring-yellow-400 shadow-[0_0_25px_rgba(255,215,0,0.5)]' : 'relative overflow-visible transition-all duration-300 hover:shadow-[0_0_35px_rgba(247,85,100,0.6)] hover:scale-[1.02]'}
+              >
+                {billingCycle === 'HALF_YEARLY' && (
+                  <div className="absolute -top--1/2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs font-bold px-4 py-1 rounded-full shadow-xl flex items-center gap-1 animate-bounce">
+                    👑 Best Value
+                  </div>
+                )}
+
+                {plan.tier === "Gold" && billingCycle !== 'HALF_YEARLY' && (
+                  <div className="absolute top-4 right-4 bg-yellow-400 text-black text-sm font-bold px-3 py-1 rounded-full shadow-lg popular-glow">
+                    Most Popular
+                  </div>
+                )}
+
+                {isCurrentPlan && (
+                  <div className="absolute top-4 left-4 bg-gradient-to-r from-yellow-400 to-pink-500 text-black text-xs font-bold px-3 py-1 rounded-full">
+                    Current Plan
+                  </div>
+                )}
+
+                {/* Pricing Block */}
+                {/* Floating Price Badge */}
+                <div className="absolute top-4 left-4 bg-[#0f172a]/80 backdrop-blur-md text-white px-4 py-2 rounded-xl shadow-lg border border-white/10">
+                  {billingCycle !== 'MONTHLY' && (
+                    <p className="text-xs text-white/60 line-through">
+                      ₹{base}/month
+                    </p>
+                  )}
+
+                  <p className="text-lg font-extrabold text-yellow-400 animate-pulse leading-tight">
+                    ₹{discounted}/month
+                  </p>
+
+                  {billingCycle !== 'MONTHLY' && (
+                    <p className="text-[10px] text-green-400 mt-0.5">
+                      Billed {billingCycle === 'QUARTERLY' ? 'Quarterly' : 'Half-Yearly'} · Save ₹{savings}
+                    </p>
+                  )}
                 </div>
-              )}
-
-              <div className="absolute top-4 left-4 bg-[#F75564] text-white text-sm font-semibold px-3 py-1 rounded-full shadow-md">
-                {plan.price}
-              </div>
 
 
-              <ul className="card-features list-disc pl-5 text-lg space-y-2 mb-6">
-                {plan.features.map((f, i) => <li key={i}>{f}</li>)}
-              </ul>
-              <a href="#contact" className="rounded-xl px-5 py-3 font-semibold btn-gradient inline-block" onClick={handleLinkClick}>Choose {plan.tier}</a>
-            </Card>
-          ))}
+                <ul className="card-features list-disc pl-5 text-lg space-y-2 mb-6">
+                  {plan.features.map((f, i) => <li key={i}>{f}</li>)}
+                </ul>
+
+                <button
+                  className="rounded-xl px-5 py-3 font-semibold btn-gradient w-full"
+                  onClick={() => initiateCheckout({
+                    restaurantId: restaurantContext.id,
+                    plan: plan.planKey,
+                    cycle: billingCycle
+                  })}
+                >
+                  {isCurrentPlan ? 'Renew Now' : `Choose ${plan.tier}`}
+                </button>
+              </Card>
+            );
+          })}
         </div>
+
       </Section>
       <Section id="behind" className="text-white">
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center">
@@ -559,9 +770,9 @@ export default function PuzzleBITE() {
               <img
                 src={"https://raw.githubusercontent.com/Loki-Singh/puzzleBiteWeb/main/so_so_me.jpg"}
                 alt="Founder: Lokendra Singh"
-                onError={(e)=>{ e.currentTarget.onerror=null; e.currentTarget.src="https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=1200&q=80"; }}
+                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=1200&q=80"; }}
               />
-              
+
             </div>
           </div>
         </div>
