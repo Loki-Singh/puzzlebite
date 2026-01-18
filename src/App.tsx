@@ -24,6 +24,8 @@ const PRICING = {
     GOLD: 8249
   }
 };
+let subscriptionUpgradeClicked = false;
+let normalFormMessage = '';
 
 const getSavings = (plan: 'BASIC' | 'PREMIUM' | 'GOLD') => {
   const base = BASE_MONTHLY[plan];
@@ -90,7 +92,7 @@ export default function PuzzleBITE() {
   const navRef = useRef(null);
 
   const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY'>('MONTHLY');
-  const [selectedPlan, setSelectedPlan] = useState<'BASIC' | 'PREMIUM' | 'GOLD'>('BASIC');
+  {//const [selectedPlan, setSelectedPlan] = useState<'BASIC' | 'PREMIUM' | 'GOLD'>('BASIC');}
 
   const [restaurantContext, setRestaurantContext] = useState<{
     id?: string;
@@ -105,6 +107,12 @@ export default function PuzzleBITE() {
     const t = setTimeout(() => setShake(false), 300);
     return () => clearTimeout(t);
   }, [billingCycle]);
+
+  const [selectedPlan, setSelectedPlan] = useState<{
+    tier: string;
+    cycle: string;
+  } | null>(null);
+
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -139,20 +147,27 @@ export default function PuzzleBITE() {
       try {
         const decodedId = atob(encodedId);
         const decodedName = atob(encodedName);
+        const decodedCurrentPlan = atob(currentPlan);
 
         setRestaurantContext({
           id: decodedId,
           name: decodedName,
-          currentPlan
+          currentPlan: decodedCurrentPlan,
         });
 
-        setSelectedPlan(currentPlan); // auto-select their current plan
+        setSelectedPlan(decodedCurrentPlan); // auto-select their current plan
+        setBillingCycle('MONTHLY');
       } catch (e) {
         console.error("Invalid base64 in URL params", e);
       }
     }
   }, []);
 
+  useEffect(() => {
+  if (subscriptionUpgradeClicked && !form.message) {
+    setForm(prev => ({ ...prev, message: normalFormMessage }));
+  }
+}, [subscriptionUpgradeClicked, normalFormMessage]);
 
 
   // Contact form
@@ -182,7 +197,16 @@ export default function PuzzleBITE() {
 
     setSending(true);
     try {
-      if (FORMSPREE_ENDPOINT) {
+      if (FORMSPREE_ENDPOINT && Boolean(restaurantContext.name && selectedPlan)) {
+        const res = await fetch(FORMSPREE_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, phone, message, to: "renewal@puzzlebite.app" })
+        });
+        if (!res.ok) throw new Error("Form endpoint error");
+        setSent(true);
+        setForm({ email: "", phone: "", message: "" });
+      } else if (FORMSPREE_ENDPOINT) {
         const res = await fetch(FORMSPREE_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -204,6 +228,7 @@ export default function PuzzleBITE() {
       setSending(false);
     }
   };
+
 
   function LaunchCountdown() {
     const launchDate = new Date("2026-03-01T00:00:00").getTime();
@@ -348,7 +373,8 @@ export default function PuzzleBITE() {
     "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=1600&q=80",
     "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1600&q=80"
   ];
-
+  
+  const renewalMessage = newFunction(selectedPlan, restaurantContext);                
   return (
     <div className="relative min-h-screen font-sans overflow-y-auto" style={{ background: bgGradient }}>
       <style>{`
@@ -679,6 +705,7 @@ export default function PuzzleBITE() {
             const months = billingCycle === 'MONTHLY' ? 1 : billingCycle === 'QUARTERLY' ? 3 : 6;
             const savings = base * months - discounted * months;
             const isCurrentPlan = restaurantContext.currentPlan === plan.planKey;
+            
 
             return (
               <Card
@@ -735,15 +762,28 @@ export default function PuzzleBITE() {
                 </ul>
 
                 <button
-                  className="rounded-xl px-5 py-3 font-semibold btn-gradient w-full"
-                  onClick={() => initiateCheckout({
-                    restaurantId: restaurantContext.id,
-                    plan: plan.planKey,
-                    cycle: billingCycle
-                  })}
+                  className="rounded-xl px-5 py-3 font-semibold btn-gradient inline-block"
+                  onClick={() => {
+                    subscriptionUpgradeClicked = true;
+                    setSelectedPlan({
+                      tier: plan.tier,
+                      cycle: billingCycle
+                    });
+
+                    normalFormMessage = renewalMessage;
+
+                    setForm(prev => ({
+                      ...prev,
+                      message: normalFormMessage   // 👈 force override here
+                    }));
+                    setTimeout(() => {
+                      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 200);
+                  }}
                 >
                   {isCurrentPlan ? 'Renew Now' : `Choose ${plan.tier}`}
                 </button>
+
               </Card>
             );
           })}
@@ -811,7 +851,9 @@ export default function PuzzleBITE() {
             </div>
             <div className="mt-5">
               <label className="block mb-2 font-semibold">Message</label>
+                
               <textarea
+                name="message"
                 className="input"
                 rows={6}
                 placeholder="Tell us about your venue or request a demo…"
@@ -866,4 +908,14 @@ export default function PuzzleBITE() {
       </Section>
     </div>
   );
+}
+
+function newFunction(selectedPlan: { tier: string; cycle: string; } | null, restaurantContext: { id?: string; name?: string; currentPlan?: "BASIC" | "PREMIUM" | "GOLD"; }) {
+  const renewalMessage = selectedPlan && restaurantContext.name
+    ? `Hello PuzzleBITE Team,\nThis is ${restaurantContext.name}. We are currently on the ${restaurantContext.currentPlan} plan.\nWe would like to renew / upgrade to the ${selectedPlan.tier} plan with ${selectedPlan.cycle} billing.\nPlease contact us to complete the subscription renewal.\nRegards,\n${restaurantContext.name}` : '';
+
+  const potentialClientMesage = selectedPlan ? `Hello PuzzleBITE Team,\nWe would like to come onboard with PuzzleBITE.\nOur preferred subscription choice would be ${selectedPlan.tier} plan with ${selectedPlan.cycle} billing.\n\nPlease contact us to complete the onboarding process.\nRegards` : '';
+  normalFormMessage = subscriptionUpgradeClicked ? renewalMessage !== '' ? renewalMessage : potentialClientMesage : '';
+  return renewalMessage;
+}
 }
