@@ -1,5 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Menu as MenuIcon, X as CloseIcon, QrCode, Play, Tag, Shield, Zap, Star, Database, BarChart2, MapPin, TrendingUp } from "lucide-react";
+import { Routes, Route } from 'react-router-dom';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+
 
 const BASE_MONTHLY = {
   BASIC: 4999,
@@ -81,7 +85,7 @@ function Card({ image, title, price, description, Icon, children, tall }) {
 }
 
 
-export default function PuzzleBITE() {
+function Home() {
   // ===== STATE =====
   const sections = useMemo(
     () => ["home", "how", "features", "why", "pricing", "behind", "contact"],
@@ -918,4 +922,14 @@ function newFunction(selectedPlan: { tier: string; cycle: string; } | null, rest
   normalFormMessage = subscriptionUpgradeClicked ? renewalMessage !== '' ? renewalMessage : potentialClientMesage : '';
   return renewalMessage;
 }
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
+    </Routes>
+  );
 }
