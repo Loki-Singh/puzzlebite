@@ -3,6 +3,7 @@ import { Menu as MenuIcon, X as CloseIcon, QrCode, Play, Tag, Shield, Zap, Star,
 import { Routes, Route } from 'react-router-dom';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import DeepLinkRedirect from "./pages/DeepLinkRedirect";
 
 
 const BASE_MONTHLY = {
@@ -927,6 +928,7 @@ function newFunction(selectedPlan: { tier: string; cycle: string; } | null, rest
 export default function App() {
   return (
     <Routes>
+      <Route path="*" element ={<DeepLinkRedirect />} />
       <Route path="/" element={<Home />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
