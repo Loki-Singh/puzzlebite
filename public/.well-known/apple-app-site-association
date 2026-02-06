@@ -1,0 +1,14 @@
+{
+"applinks": {
+"details": [
+{
+"appIDs": ["TEAMID.com.puzzlebite.puzzlebite"],
+"paths": [
+"/qr*",
+"/open/",
+"/post_detail"
+]
+}
+]
+}
+}
