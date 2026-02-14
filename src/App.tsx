@@ -236,7 +236,7 @@ function Home() {
 
 
   function LaunchCountdown() {
-    const launchDate = new Date("2026-03-01T00:00:00").getTime();
+    const launchDate = new Date("2026-03-11T00:00:00").getTime();
     const [timeLeft, setTimeLeft] = useState({
       days: 0, hours: 0, minutes: 0, seconds: 0
     });
