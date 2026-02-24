@@ -4,6 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import DeepLinkRedirect from "./pages/DeepLinkRedirect";
+import DeleteAccount from "./pages/DeleteAccount";
 
 
 const BASE_MONTHLY = {
@@ -932,6 +933,7 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
+      <Route path="/delete-account" element={<DeleteAccount />} />
     </Routes>
   );
 }
