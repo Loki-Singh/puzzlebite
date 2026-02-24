@@ -38,7 +38,7 @@ export default function DeleteAccount() {
         </p>
 
         <p className="mt-6">
-          For any questions, contact us at: <strong>support@puzzlebite.app</strong>
+          For any questions, contact us at: <strong>research@puzzlebite.app</strong>
         </p>
       </div>
     </div>
