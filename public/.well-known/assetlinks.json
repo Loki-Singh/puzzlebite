@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "com.puzzlebite.puzzlebite",
       "sha256_cert_fingerprints": [
-        "41:D9:DA:73:32:74:72:33:E1:FD:9C:47:FF:F8:25:78:14:AC:AD:FB:3B:1E:97:C6:FE:10:09:40:63:E4:45:DC"
+        "41:D9:DA:73:32:74:72:33:E1:FD:9C:47:FF:F8:25:78:14:AC:AD:FB:3B:1E:97:C6:FE:10:09:40:63:E4:45:DC",
+        "48:A7:AB:4A:E5:8F:DC:C4:DE:E5:E8:50:71:7F:16:7E:1C:E2:17:F7:BF:2B:0B:88:D2:63:EF:21:97:7B:3F:8D"
       ]
     }
   }
