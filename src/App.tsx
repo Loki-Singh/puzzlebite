@@ -8,26 +8,26 @@ import DeleteAccount from "./pages/DeleteAccount";
 
 
 const BASE_MONTHLY = {
-  BASIC: 4999,
-  PREMIUM: 7999,
-  GOLD: 10999
+  BASIC: 3499,
+  PREMIUM: 5999,
+  GOLD: 6499
 };
 
 const PRICING = {
   MONTHLY: {
-    BASIC: 4999,
-    PREMIUM: 7999,
-    GOLD: 10999
+     BASIC: 3499,
+    PREMIUM: 5999,
+    GOLD: 6499
   },
   QUARTERLY: {
-    BASIC: 4249,   // 15% off
-    PREMIUM: 6799,
-    GOLD: 9349
+    BASIC: 2975,   // 15% off
+    PREMIUM: 5099,
+    GOLD: 5525
   },
   HALF_YEARLY: {
-    BASIC: 3749,   // 25% off
-    PREMIUM: 5999,
-    GOLD: 8249
+    BASIC: 2624,   // 25% off
+    PREMIUM: 4499,
+    GOLD: 4875
   }
 };
 let subscriptionUpgradeClicked = false;
